@@ -1,0 +1,690 @@
+use crate::types::{Section, SectionKind};
+
+// ─── Genre ───────────────────────────────────────────────────────────────────
+
+pub struct Genre {
+    pub name:        &'static str,
+    pub default_bpm: u32,
+    pub bpm_range:   (u32, u32),
+    pub tips:        &'static [&'static str],
+    pub structure:   &'static [(SectionKind, u32)],
+}
+
+impl Genre {
+    pub fn default_sections(&self) -> Vec<Section> {
+        self.structure
+            .iter()
+            .map(|(k, b)| Section::new(k.clone(), *b))
+            .collect()
+    }
+}
+
+// ─── Artist template ─────────────────────────────────────────────────────────
+
+pub struct ArtistTemplate {
+    pub name:        &'static str,
+    pub genre_hint:  &'static str,
+    pub default_bpm: u32,
+    pub bpm_range:   (u32, u32),
+    pub tips:        &'static [&'static str],
+    pub structure:   &'static [(SectionKind, u32)],
+}
+
+impl ArtistTemplate {
+    pub fn default_sections(&self) -> Vec<Section> {
+        self.structure
+            .iter()
+            .map(|(k, b)| Section::new(k.clone(), *b))
+            .collect()
+    }
+}
+
+// ─── Genres ──────────────────────────────────────────────────────────────────
+
+pub static GENRES: &[Genre] = &[
+    // ── Pop ──────────────────────────────────────────────────────────────────
+    Genre {
+        name: "Pop",
+        default_bpm: 120,
+        bpm_range: (90, 140),
+        tips: &[
+            "4/4 time signature",
+            "Chorus catchy, repete — hook-driven",
+            "Le verse construit l'histoire, le chorus libere la tension",
+            "Pre-chorus cree l'anticipation avant le drop",
+            "Bridge apporte le contraste au 3e acte",
+            "Duree typique : 3:00 - 3:30",
+        ],
+        structure: &[
+            (SectionKind::Intro,      8),
+            (SectionKind::Verse,     16),
+            (SectionKind::PreChorus,  8),
+            (SectionKind::Chorus,    16),
+            (SectionKind::Verse,     16),
+            (SectionKind::PreChorus,  8),
+            (SectionKind::Chorus,    16),
+            (SectionKind::Bridge,     8),
+            (SectionKind::Chorus,    16),
+            (SectionKind::Outro,      8),
+        ],
+    },
+    // ── Hip-Hop ───────────────────────────────────────────────────────────────
+    Genre {
+        name: "Hip-Hop",
+        default_bpm: 90,
+        bpm_range: (70, 110),
+        tips: &[
+            "4/4 time signature",
+            "Kick sur les temps 1 & 3, snare sur 2 & 4",
+            "Verse : storytelling / lyricism (16 mesures standard)",
+            "Hook : court et accrocheur (8 mesures)",
+            "Souvent base sur des samples ou des boucles",
+            "Duree typique : 3:00 - 4:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,  4),
+            (SectionKind::Verse, 16),
+            (SectionKind::Hook,   8),
+            (SectionKind::Verse, 16),
+            (SectionKind::Hook,   8),
+            (SectionKind::Bridge, 8),
+            (SectionKind::Hook,   8),
+            (SectionKind::Outro,  4),
+        ],
+    },
+    // ── Trap ─────────────────────────────────────────────────────────────────
+    Genre {
+        name: "Trap",
+        default_bpm: 140,
+        bpm_range: (120, 160),
+        tips: &[
+            "4/4 — hi-hats en triolets ou doubles croches",
+            "808 bass slides avec beaucoup de reverb",
+            "Hi-hat rolls definissent le groove",
+            "Melodies sombres, basses lourdes",
+            "Verse : 16 mesures, Hook : 8 mesures",
+            "Duree typique : 2:30 - 3:30",
+        ],
+        structure: &[
+            (SectionKind::Intro,  4),
+            (SectionKind::Verse, 16),
+            (SectionKind::Hook,   8),
+            (SectionKind::Verse, 16),
+            (SectionKind::Hook,   8),
+            (SectionKind::Verse,  8),
+            (SectionKind::Hook,   8),
+            (SectionKind::Outro,  4),
+        ],
+    },
+    // ── Rock ─────────────────────────────────────────────────────────────────
+    Genre {
+        name: "Rock",
+        default_bpm: 130,
+        bpm_range: (100, 160),
+        tips: &[
+            "4/4 time signature",
+            "Le riff de guitare definit souvent le morceau",
+            "Power chords, guitares saturees",
+            "Backbeat fort (snare sur 2 & 4)",
+            "Solo de guitare remplace souvent le bridge",
+            "Duree typique : 3:00 - 4:30",
+        ],
+        structure: &[
+            (SectionKind::Intro,  8),
+            (SectionKind::Verse, 16),
+            (SectionKind::Chorus, 8),
+            (SectionKind::Verse, 16),
+            (SectionKind::Chorus, 8),
+            (SectionKind::Solo,  16),
+            (SectionKind::Chorus, 8),
+            (SectionKind::Outro,  8),
+        ],
+    },
+    // ── Metal ────────────────────────────────────────────────────────────────
+    Genre {
+        name: "Metal",
+        default_bpm: 165,
+        bpm_range: (120, 220),
+        tips: &[
+            "4/4 ou 6/8 time signature",
+            "Double grosse caisse, blast beats",
+            "Drop tuning sur les guitares",
+            "Breakdown : section lourde et lente (mosh pit)",
+            "Composition basee sur des riffs",
+            "Duree typique : 3:30 - 5:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,      8),
+            (SectionKind::Verse,     16),
+            (SectionKind::Chorus,     8),
+            (SectionKind::Verse,     16),
+            (SectionKind::Chorus,     8),
+            (SectionKind::Breakdown,  8),
+            (SectionKind::Solo,      16),
+            (SectionKind::Chorus,     8),
+            (SectionKind::Outro,      8),
+        ],
+    },
+    // ── EDM / House ───────────────────────────────────────────────────────────
+    Genre {
+        name: "EDM / House",
+        default_bpm: 126,
+        bpm_range: (118, 135),
+        tips: &[
+            "4/4, kick four-on-the-floor",
+            "Intro longue pour le mix DJ",
+            "Le Drop est l'evenement principal (energie maximale)",
+            "Build-up cree la tension avant le drop",
+            "Breakdown : section epuree, melodie seule",
+            "Duree typique : 5:00 - 7:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    // ── Acid House ───────────────────────────────────────────────────────────
+    Genre {
+        name: "Acid House",
+        default_bpm: 128,
+        bpm_range: (120, 135),
+        tips: &[
+            "4/4, kick four-on-the-floor",
+            "Roland TB-303 : bassline acide caracteristique",
+            "Filter sweeps progressifs sur la 303",
+            "Structures repetitives — l'evolution est dans les layers",
+            "Charleston ouvert en syncope, clap sec sur 2 & 4",
+            "Duree typique : 6:00 - 8:00 (mix DJ)",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       48),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    // ── Techno ───────────────────────────────────────────────────────────────
+    Genre {
+        name: "Techno",
+        default_bpm: 140,
+        bpm_range: (130, 160),
+        tips: &[
+            "4/4, kick implacable",
+            "Son minimaliste et industriel",
+            "Les layers s'ajoutent/retirent progressivement",
+            "Intro/Outro longues pour le mix DJ",
+            "Acid basslines (son 303)",
+            "Duree typique : 6:00 - 8:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::BuildUp,    32),
+            (SectionKind::Drop,       64),
+            (SectionKind::Breakdown,  32),
+            (SectionKind::Drop,       64),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    // ── Hard Techno ──────────────────────────────────────────────────────────
+    Genre {
+        name: "Hard Techno",
+        default_bpm: 148,
+        bpm_range: (140, 160),
+        tips: &[
+            "4/4, kick distordu et compresse (pitch down)",
+            "Basses sombres tres compressees, souvent saturees",
+            "Sons industriels, bruitages mecaniques",
+            "Peu ou pas de breakdown — l'energie reste haute",
+            "Loops courtes (4-8 mesures) qui evoluent lentement",
+            "Duree typique : 6:00 - 9:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       64),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       64),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    // ── Hardcore / Gabber ────────────────────────────────────────────────────
+    Genre {
+        name: "Hardcore / Gabber",
+        default_bpm: 180,
+        bpm_range: (160, 220),
+        tips: &[
+            "4/4, kick extrement distordu a haute vitesse",
+            "Pas de subtilite — l'energie est maximale en permanence",
+            "Vocals pitch-shifted (chipmunk ou pitch-down agressif)",
+            "Melodie simple et efficace sur des leads saturees",
+            "Breaks courts (2-4 mesures) avant un retour brutal",
+            "Duree typique : 4:00 - 6:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,      16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,   8),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,   8),
+            (SectionKind::BuildUp,     8),
+            (SectionKind::Drop,       32),
+            (SectionKind::Outro,      16),
+        ],
+    },
+    // ── Hardstyle ────────────────────────────────────────────────────────────
+    Genre {
+        name: "Hardstyle",
+        default_bpm: 150,
+        bpm_range: (140, 160),
+        tips: &[
+            "4/4, kick avec longue queue (distordu + reverb)",
+            "Reverse bass : la signature sonore du hardstyle",
+            "Leads euphoriques, souvent melodiques et epiques",
+            "Le breakdown est emotionnel avant le retour du kick",
+            "Structure tres claire : intro > build > drop > break > drop > outro",
+            "Duree typique : 5:00 - 7:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,  32),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Outro,      16),
+        ],
+    },
+    // ── Psytrance ────────────────────────────────────────────────────────────
+    Genre {
+        name: "Psytrance",
+        default_bpm: 145,
+        bpm_range: (138, 152),
+        tips: &[
+            "4/4, kick four-on-the-floor",
+            "Bassline en doubles croches sur le contretemps (off-beat)",
+            "Effets psychedeliques : filtres, delays, chorus intenses",
+            "Layers qui s'accumulent progressivement",
+            "Breakdown atmospherique (souvent ambiant) avant le retour",
+            "Duree typique : 7:00 - 10:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::BuildUp,    32),
+            (SectionKind::Drop,       64),
+            (SectionKind::Breakdown,  32),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       64),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    // ── Industrial Techno ────────────────────────────────────────────────────
+    Genre {
+        name: "Industrial Techno",
+        default_bpm: 145,
+        bpm_range: (135, 158),
+        tips: &[
+            "4/4, patterns rythmiques complexes et chaotiques",
+            "Sons metalliques, bruitages d'usine, distorsions extremes",
+            "Influence EBM (Electronic Body Music)",
+            "Peu de melodie — la texture et le rythme priment",
+            "Structure tres libre, souvent experimentale",
+            "Duree typique : 7:00 - 10:00+",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::Drop,       64),
+            (SectionKind::Breakdown,  32),
+            (SectionKind::Drop,       64),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    // ── Drum & Bass ──────────────────────────────────────────────────────────
+    Genre {
+        name: "Drum & Bass",
+        default_bpm: 174,
+        bpm_range: (160, 185),
+        tips: &[
+            "4/4, breakbeats a haute vitesse",
+            "Sub-bass lourde et bass wobbles",
+            "Amen break ou Reese bass",
+            "Intro/Outro pour le mixage DJ",
+            "Rollers vs Jumpup : groove ou energie",
+            "Duree typique : 5:00 - 6:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    // ── Jazz ─────────────────────────────────────────────────────────────────
+    Genre {
+        name: "Jazz",
+        default_bpm: 120,
+        bpm_range: (60, 240),
+        tips: &[
+            "4/4, 3/4 ou 5/4 — liberte rythmique",
+            "Head (melodie) -> Solos -> Head out",
+            "Les changements d'accords definissent la structure",
+            "Duree du solo flexible, souvent improvisee",
+            "Swing feel : croche pointee + double croche",
+            "Duree typique : 4:00 - 8:00+",
+        ],
+        structure: &[
+            (SectionKind::Intro,   8),
+            (SectionKind::Verse,  32),
+            (SectionKind::Solo,   32),
+            (SectionKind::Solo,   32),
+            (SectionKind::Bridge, 16),
+            (SectionKind::Verse,  32),
+            (SectionKind::Outro,   8),
+        ],
+    },
+    // ── R&B / Soul ───────────────────────────────────────────────────────────
+    Genre {
+        name: "R&B / Soul",
+        default_bpm: 85,
+        bpm_range: (65, 105),
+        tips: &[
+            "4/4 time signature",
+            "Le groove et le feel priment sur la technique",
+            "Runs vocaux et melismes dans le chorus",
+            "Accords riches : 7eme, 9eme, sus4",
+            "Guitare rythmique ou clavier compe le groove",
+            "Duree typique : 3:30 - 4:30",
+        ],
+        structure: &[
+            (SectionKind::Intro,      8),
+            (SectionKind::Verse,     16),
+            (SectionKind::PreChorus,  8),
+            (SectionKind::Chorus,    16),
+            (SectionKind::Verse,     16),
+            (SectionKind::PreChorus,  8),
+            (SectionKind::Chorus,    16),
+            (SectionKind::Bridge,     8),
+            (SectionKind::Chorus,    16),
+            (SectionKind::Outro,      8),
+        ],
+    },
+    // ── Lo-fi Hip-Hop ────────────────────────────────────────────────────────
+    Genre {
+        name: "Lo-fi Hip-Hop",
+        default_bpm: 75,
+        bpm_range: (60, 90),
+        tips: &[
+            "4/4, feeling legerement en retard sur le temps",
+            "Craquements vinyle, saturation cassette",
+            "Accords jazz, melodies basees sur samples",
+            "Structure minimale, axee sur la boucle",
+            "Ambiance detendue, nostalgique",
+            "Duree typique : 2:00 - 3:30",
+        ],
+        structure: &[
+            (SectionKind::Intro,      8),
+            (SectionKind::Verse,     16),
+            (SectionKind::Hook,       8),
+            (SectionKind::Verse,     16),
+            (SectionKind::Interlude,  8),
+            (SectionKind::Verse,     16),
+            (SectionKind::Hook,       8),
+            (SectionKind::Outro,      8),
+        ],
+    },
+    // ── Reggae ───────────────────────────────────────────────────────────────
+    Genre {
+        name: "Reggae",
+        default_bpm: 80,
+        bpm_range: (65, 95),
+        tips: &[
+            "4/4 time signature",
+            "Skank : chops guitare/clavier sur les contretemps",
+            "La basse joue melodiquement, pas seulement la fondamentale",
+            "One-drop : kick uniquement sur le temps 3",
+            "Feeling relache, legerement derriere le temps",
+            "Duree typique : 3:30 - 5:00",
+        ],
+        structure: &[
+            (SectionKind::Intro,   8),
+            (SectionKind::Verse,  16),
+            (SectionKind::Chorus,  8),
+            (SectionKind::Verse,  16),
+            (SectionKind::Chorus,  8),
+            (SectionKind::Bridge,  8),
+            (SectionKind::Chorus,  8),
+            (SectionKind::Outro,   8),
+        ],
+    },
+];
+
+// ─── Artist templates ────────────────────────────────────────────────────────
+
+pub static ARTISTS: &[ArtistTemplate] = &[
+    ArtistTemplate {
+        name: "Daft Punk",
+        genre_hint: "French House / Progressive",
+        default_bpm: 123,
+        bpm_range: (115, 130),
+        tips: &[
+            "Samples filtrés avec filtre passe-haut evolutif",
+            "Progression d'accords simple (souvent 2-4 accords) en boucle",
+            "Vocoder / talk-box : voix robotique caracteristique",
+            "Structure tres epuree — la montee et la retombee du filtre raconte l'histoire",
+            "Groove funk inspire de Giorgio Moroder et Chic",
+            "Ex: Around the World, One More Time, Get Lucky",
+        ],
+        structure: &[
+            (SectionKind::Intro,      16),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    ArtistTemplate {
+        name: "Aphex Twin",
+        genre_hint: "IDM / Ambient / Experimental",
+        default_bpm: 138,
+        bpm_range: (60, 220),
+        tips: &[
+            "Polyrhythmes complexes, signatures rythmiques inhabituelles",
+            "Contraste extreme : de l'ambient tres doux au harsh noise",
+            "Sons de synthese personnels (Korg MS-20, synths custom)",
+            "Pas de structure conventionnelle — le morceau evolue librement",
+            "Textures atmospheriques combinées à des rythmes brisés",
+            "Ex: Windowlicker, Avril 14th, Come to Daddy",
+        ],
+        structure: &[
+            (SectionKind::Intro,      16),
+            (SectionKind::Verse,      32),
+            (SectionKind::Interlude,  16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,  24),
+            (SectionKind::Drop,       16),
+            (SectionKind::Outro,      24),
+        ],
+    },
+    ArtistTemplate {
+        name: "The Prodigy",
+        genre_hint: "Big Beat / Breakbeat Hardcore",
+        default_bpm: 145,
+        bpm_range: (135, 155),
+        tips: &[
+            "Breakbeats agressifs combines a des elements rave",
+            "Energie punk — attitude rebelle dans le son et les lyrics",
+            "Samples de rock, metal et hardcore recontextualises",
+            "Vocals cries / agressifs (Keith Flint) ou samples transformes",
+            "Structure quasi-rock : intro > verse > chorus > verse > outro",
+            "Ex: Firestarter, Breathe, Smack My Bitch Up",
+        ],
+        structure: &[
+            (SectionKind::Intro,   8),
+            (SectionKind::Verse,  16),
+            (SectionKind::Chorus,  8),
+            (SectionKind::Verse,  16),
+            (SectionKind::Chorus,  8),
+            (SectionKind::Bridge, 16),
+            (SectionKind::Chorus, 16),
+            (SectionKind::Outro,   8),
+        ],
+    },
+    ArtistTemplate {
+        name: "deadmau5",
+        genre_hint: "Progressive House",
+        default_bpm: 128,
+        bpm_range: (120, 132),
+        tips: &[
+            "Progressive house : la construction est lente et deliberee",
+            "Arpegges de synthes qui evoluent sur plusieurs minutes",
+            "Basse sidechain tres marquee sur le kick",
+            "Peu de drops evidents — l'intensite monte graduellement",
+            "Arrangements riches avec de nombreux layers de synthes",
+            "Ex: Strobe, I Remember, Raise Your Weapon",
+        ],
+        structure: &[
+            (SectionKind::Intro,      64),
+            (SectionKind::BuildUp,    32),
+            (SectionKind::Drop,       64),
+            (SectionKind::Breakdown,  32),
+            (SectionKind::BuildUp,    32),
+            (SectionKind::Drop,       64),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    ArtistTemplate {
+        name: "Jeff Mills",
+        genre_hint: "Detroit Techno / Minimal",
+        default_bpm: 145,
+        bpm_range: (138, 155),
+        tips: &[
+            "Techno minimaliste de Detroit — chaque element compte",
+            "Jeu live sur TR-909 : programmation rythmique en direct",
+            "Loops courts qui evoluent par soustraction/addition",
+            "Pas de vocals, pas de melodie explicite — le rythme est tout",
+            "Structure DJ : longue intro et outro pour le mixing",
+            "Ex: The Bells, Gamma Player, Step to Enchantment",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::Drop,       64),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::Drop,       64),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    ArtistTemplate {
+        name: "Gesaffelstein",
+        genre_hint: "Dark Electro / Industrial Techno",
+        default_bpm: 138,
+        bpm_range: (128, 148),
+        tips: &[
+            "Esthetique noire et industrielle — son froid et metallique",
+            "Kicks tres compresses et distordus (style Kickpuncher)",
+            "Basslines en dents de scie saturees, tres graves",
+            "Minimalisme expressif : peu de notes, maximum d'impact",
+            "Structure tension/release avec des silences dramatiques",
+            "Ex: Pursuit, Viol, Hellifornia, Hate or Glory",
+        ],
+        structure: &[
+            (SectionKind::Intro,      16),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Breakdown,   8),
+            (SectionKind::Drop,       16),
+            (SectionKind::Outro,      16),
+        ],
+    },
+    ArtistTemplate {
+        name: "Kavinsky",
+        genre_hint: "Synthwave / Italo Disco",
+        default_bpm: 118,
+        bpm_range: (108, 128),
+        tips: &[
+            "Inspiration annees 80 : DX7, Jupiter-8, Oberheim",
+            "Basses profondes style italo-disco",
+            "Melodie de synthes nostalgiques et cinematiques",
+            "Structure pop classique mais avec une production electronique",
+            "Reverb longue sur tout, sensation de nuit et de vitesse",
+            "Ex: Nightcall, Protovision, Pacific Coast Highway",
+        ],
+        structure: &[
+            (SectionKind::Intro,      16),
+            (SectionKind::Verse,      16),
+            (SectionKind::Chorus,     16),
+            (SectionKind::Verse,      16),
+            (SectionKind::Chorus,     16),
+            (SectionKind::Bridge,     16),
+            (SectionKind::Chorus,     16),
+            (SectionKind::Outro,      16),
+        ],
+    },
+    ArtistTemplate {
+        name: "Nina Kraviz",
+        genre_hint: "Techno / Acid",
+        default_bpm: 142,
+        bpm_range: (135, 150),
+        tips: &[
+            "Techno acide minimaliste, deep et hypnotique",
+            "TB-303 acid comme element central ou secondaire",
+            "Vocals samples courts, repetes et transformes",
+            "Grosse caisse sombre et profonde, peu de hi-hats",
+            "Longs passages repetitifs — la transe est l'objectif",
+            "Ex: I'm Gonna Get You, I'm Drunk, Ghetto Kraviz",
+        ],
+        structure: &[
+            (SectionKind::Intro,      32),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       64),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::Drop,       64),
+            (SectionKind::Outro,      32),
+        ],
+    },
+    ArtistTemplate {
+        name: "Chemical Brothers",
+        genre_hint: "Big Beat / Electronica",
+        default_bpm: 135,
+        bpm_range: (125, 148),
+        tips: &[
+            "Breakbeats massifs combines a des synthes psychedeliques",
+            "Samples obscurs retravailles, references rock et soul",
+            "Vocals collaboratifs (Noel Gallagher, Q-Tip, Beth Ditto)",
+            "Alternance de sections lourdes et de passages ambiant",
+            "Sens du spectacle — concu pour les grandes scenes",
+            "Ex: Block Rockin' Beats, Hey Boy Hey Girl, Believe",
+        ],
+        structure: &[
+            (SectionKind::Intro,      16),
+            (SectionKind::Verse,      16),
+            (SectionKind::Drop,       16),
+            (SectionKind::Verse,      16),
+            (SectionKind::Drop,       16),
+            (SectionKind::Breakdown,  16),
+            (SectionKind::BuildUp,    16),
+            (SectionKind::Drop,       32),
+            (SectionKind::Outro,      16),
+        ],
+    },
+];
