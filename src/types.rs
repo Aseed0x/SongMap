@@ -123,15 +123,16 @@ impl SectionKind {
 
 #[derive(Clone, Debug)]
 pub struct Section {
-    pub name: String,
-    pub bars: u32,
-    pub kind: SectionKind,
+    pub name:  String,
+    pub bars:  u32,
+    pub kind:  SectionKind,
+    pub notes: String,
 }
 
 impl Section {
     pub fn new(kind: SectionKind, bars: u32) -> Self {
         let name = kind.label().to_string();
-        Self { name, bars, kind }
+        Self { name, bars, kind, notes: String::new() }
     }
 
     pub fn color(&self) -> Color32 {
@@ -156,9 +157,11 @@ pub struct SongProject {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SectionSave {
-    pub name: String,
-    pub kind: String,
-    pub bars: u32,
+    pub name:  String,
+    pub kind:  String,
+    pub bars:  u32,
+    #[serde(default)]
+    pub notes: String,
 }
 
 impl SongProject {
@@ -167,7 +170,7 @@ impl SongProject {
             .iter()
             .map(|s| {
                 let kind = SectionKind::from_key(&s.kind);
-                Section { name: s.name.clone(), bars: s.bars, kind }
+                Section { name: s.name.clone(), bars: s.bars, kind, notes: s.notes.clone() }
             })
             .collect()
     }
@@ -182,9 +185,10 @@ impl From<(&str, f32, &str, &[Section])> for SongProject {
             sections: sections
                 .iter()
                 .map(|s| SectionSave {
-                    name: s.name.clone(),
-                    kind: s.kind.to_key().to_string(),
-                    bars: s.bars,
+                    name:  s.name.clone(),
+                    kind:  s.kind.to_key().to_string(),
+                    bars:  s.bars,
+                    notes: s.notes.clone(),
                 })
                 .collect(),
         }

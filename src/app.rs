@@ -551,27 +551,54 @@ impl SongMapApp {
         let mut cumul_bars = 0u32;
 
         egui::ScrollArea::vertical().id_salt("detail").show(ui, |ui| {
-            for (i, section) in self.sections.iter().enumerate() {
-                let dur        = section.duration_secs(self.bpm);
-                let color      = section.color();
+            for i in 0..self.sections.len() {
+                let dur        = self.sections[i].duration_secs(self.bpm);
+                let color      = self.sections[i].color();
                 let start_time = cumul_bars as f32 * bar_secs;
-                cumul_bars    += section.bars;
+                cumul_bars    += self.sections[i].bars;
                 let selected   = self.selected_section == Some(i);
 
+                let bg = if selected {
+                    Color32::from_rgb(32, 48, 78)
+                } else {
+                    Color32::from_rgb(18, 18, 24)
+                };
+
                 egui::Frame::none()
-                    .fill(if selected { Color32::from_rgb(32, 48, 78) } else { Color32::TRANSPARENT })
-                    .inner_margin(egui::Margin::symmetric(4.0, 2.0))
+                    .fill(bg)
+                    .stroke(Stroke::new(1.0, Color32::from_rgb(40, 40, 55)))
+                    .inner_margin(egui::Margin::symmetric(6.0, 4.0))
+                    .outer_margin(egui::Margin::symmetric(0.0, 1.0))
+                    .rounding(egui::Rounding::same(4.0))
                     .show(ui, |ui| {
+                        // ── Header row ──────────────────────────────────
                         ui.horizontal(|ui| {
                             let (r, _) = ui.allocate_exact_size(vec2(11.0, 11.0), egui::Sense::hover());
                             ui.painter().rect_filled(r, 3.0, color);
-                            ui.label(RichText::new(format!("{:2}.", i + 1)).color(Color32::from_gray(120)));
-                            ui.label(RichText::new(&section.name).strong());
-                            ui.label(RichText::new(format!("— {} mesures", section.bars)).color(Color32::from_gray(150)));
+                            ui.label(RichText::new(format!("{:2}.", i + 1)).color(Color32::from_gray(110)));
+                            ui.label(RichText::new(&self.sections[i].name).strong().color(Color32::WHITE));
+                            ui.label(RichText::new(format!("— {} mesures", self.sections[i].bars)).color(Color32::from_gray(150)));
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                ui.label(RichText::new(format!("{:.0}s  [{}]", dur, Self::fmt_time(start_time))).small().color(Color32::from_gray(120)));
+                                ui.label(
+                                    RichText::new(format!("{:.0}s  [{}]", dur, Self::fmt_time(start_time)))
+                                        .small()
+                                        .color(Color32::from_gray(110)),
+                                );
                             });
                         });
+
+                        // ── Notes row ────────────────────────────────────
+                        ui.add_space(2.0);
+                        let note_hint = "Notes, samples, idees...";
+                        let note_empty = self.sections[i].notes.is_empty();
+                        let te = egui::TextEdit::multiline(&mut self.sections[i].notes)
+                            .hint_text(note_hint)
+                            .desired_rows(if note_empty && !selected { 1 } else { 2 })
+                            .desired_width(ui.available_width())
+                            .frame(false)
+                            .text_color(Color32::from_gray(200))
+                            .font(egui::FontId::proportional(12.0));
+                        ui.add(te);
                     });
             }
         });
