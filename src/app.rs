@@ -155,6 +155,16 @@ impl SongMapApp {
 
 impl eframe::App for SongMapApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // ── Suivi DPI multi-moniteur ──────────────────────────────────────────
+        // Quand la fenetre passe sur un ecran avec un scaling different,
+        // on aligne egui sur le pixels_per_point natif du nouveau moniteur.
+        let native_ppp = ctx.input(|i| i.viewport().native_pixels_per_point);
+        if let Some(ppp) = native_ppp {
+            if (ppp - ctx.pixels_per_point()).abs() > 0.01 {
+                ctx.set_pixels_per_point(ppp);
+            }
+        }
+
         ctx.set_visuals(egui::Visuals::dark());
 
         // ── Bottom panel : tips (full width) ─────────────────────────────────
