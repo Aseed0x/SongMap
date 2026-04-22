@@ -21,7 +21,27 @@ SongMap helps musicians and producers map out their tracks section by section �
 
 ## Screenshots
 
-> _Coming soon_
+**Main screen** — genre/artist templates on the left, interactive timeline in the center, sections & notes on the right
+
+![Main screen](assets/screenshots/main-screen.png)
+
+---
+
+**BPM area** — set your tempo and get instant bar/beat duration tables up to 64 bars
+
+![BPM area](assets/screenshots/bpm-area.png)
+
+---
+
+**Sections & Save** — manage your section list, name your project, save/load, and enable auto-save
+
+![Save and sections](assets/screenshots/save-and-sections.png)
+
+---
+
+**Genre tips** — context-aware production advice shown at the bottom for the selected genre
+
+![Help area](assets/screenshots/help-area.png)
 
 ---
 
@@ -61,7 +81,7 @@ cargo run --release
 
 ## Project Structure
 
-```
+```text
 src/
 ├── main.rs     # Entry point, window configuration
 ├── app.rs      # UI layout, interaction logic, timeline rendering
@@ -77,7 +97,7 @@ assets/
 ## Tech Stack
 
 | Library | Role |
-|---|---|
+| --- | --- |
 | [egui](https://github.com/emilk/egui) + [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) | Immediate-mode GUI |
 | [serde](https://serde.rs/) + serde_json | Project serialization (JSON) |
 | [rfd](https://github.com/PolyMeilex/rfd) | Native file dialogs |

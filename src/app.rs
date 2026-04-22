@@ -47,6 +47,11 @@ pub struct SongMapApp {
 
     // Feedback messages
     status_msg: String,
+
+    // Auto-save
+    auto_save:       bool,
+    auto_save_path:  Option<std::path::PathBuf>,
+    unsaved_changes: bool,
 }
 
 impl SongMapApp {
@@ -65,6 +70,9 @@ impl SongMapApp {
             add_bars:         16,
             timeline_drag:    None,
             status_msg:       String::new(),
+            auto_save:        false,
+            auto_save_path:   None,
+            unsaved_changes:  false,
         }
     }
 
@@ -103,16 +111,43 @@ impl SongMapApp {
         }
     }
 
-    // ── Save / Load ───────────────────────────────────────────────────────────
+    // ── Auto-save ─────────────────────────────────────────────────────────────
 
-    fn save_project(&mut self) {
-        let project = SongProject::from((
+    fn build_project(&self) -> SongProject {
+        SongProject::from((
             self.project_name.as_str(),
             self.bpm,
             self.current_genre_name(),
             self.sections.as_slice(),
-        ));
-        let json = match serde_json::to_string_pretty(&project) {
+        ))
+    }
+
+    fn auto_save_silent(&mut self) {
+        let Some(path) = self.auto_save_path.as_ref() else { return };
+        if let Ok(json) = serde_json::to_string_pretty(&self.build_project()) {
+            match std::fs::write(path, &json) {
+                Ok(_) => {
+                    self.unsaved_changes = false;
+                    self.status_msg = format!(
+                        "Auto-save : {}",
+                        path.file_name().unwrap_or_default().to_string_lossy()
+                    );
+                }
+                Err(e) => self.status_msg = format!("Erreur auto-save: {}", e),
+            }
+        }
+    }
+
+    fn maybe_auto_save(&mut self) {
+        if self.auto_save && self.unsaved_changes && self.auto_save_path.is_some() {
+            self.auto_save_silent();
+        }
+    }
+
+    // ── Save / Load ───────────────────────────────────────────────────────────
+
+    fn save_project(&mut self) {
+        let json = match serde_json::to_string_pretty(&self.build_project()) {
             Ok(j) => j,
             Err(e) => { self.status_msg = format!("Erreur serialisation: {}", e); return; }
         };
@@ -122,7 +157,11 @@ impl SongMapApp {
             .save_file()
         {
             match std::fs::write(&path, &json) {
-                Ok(_)  => self.status_msg = format!("Sauvegarde : {}", path.display()),
+                Ok(_) => {
+                    self.auto_save_path = Some(path.clone());
+                    self.unsaved_changes = false;
+                    self.status_msg = format!("Sauvegarde : {}", path.display());
+                }
                 Err(e) => self.status_msg = format!("Erreur ecriture: {}", e),
             }
         }
@@ -279,11 +318,13 @@ impl SongMapApp {
                 Color32::TRANSPARENT
             });
             if ui.add_sized([ui.available_width(), 24.0], btn).clicked() {
+                self.maybe_auto_save();
                 self.selected_genre  = i;
                 self.left_tab        = LeftTab::Genres;
                 self.bpm             = GENRES[i].default_bpm as f32;
                 self.sections        = GENRES[i].default_sections();
                 self.selected_section = None;
+                self.unsaved_changes = false;
             }
         }
     }
@@ -306,11 +347,13 @@ impl SongMapApp {
             });
             ui.push_id(i + 1000, |ui| {
                 if ui.add_sized([ui.available_width(), 24.0], btn).clicked() {
+                    self.maybe_auto_save();
                     self.selected_artist  = i;
                     self.left_tab         = LeftTab::Artists;
                     self.bpm              = ARTISTS[i].default_bpm as f32;
                     self.sections         = ARTISTS[i].default_sections();
                     self.selected_section = None;
+                    self.unsaved_changes  = false;
                 }
                 if selected {
                     ui.label(sub);
@@ -334,6 +377,7 @@ impl SongMapApp {
         ui.horizontal(|ui| {
             if ui.add(egui::DragValue::new(&mut bpm_int).range(lo..=hi).speed(1.0)).changed() {
                 self.bpm = bpm_int as f32;
+                self.unsaved_changes = true;
             }
             ui.label(RichText::new("BPM").color(Color32::from_gray(140)));
             if ui.small_button("R").on_hover_text("Revenir au BPM par defaut").clicked() {
@@ -342,9 +386,12 @@ impl SongMapApp {
                 } else {
                     GENRES[self.selected_genre].default_bpm as f32
                 };
+                self.unsaved_changes = true;
             }
         });
-        ui.add(egui::Slider::new(&mut self.bpm, lo as f32..=hi as f32).show_value(false));
+        if ui.add(egui::Slider::new(&mut self.bpm, lo as f32..=hi as f32).show_value(false)).changed() {
+            self.unsaved_changes = true;
+        }
 
         ui.add_space(8.0);
         ui.label(RichText::new("Conversion").strong());
@@ -429,14 +476,17 @@ impl SongMapApp {
                 SectionOp::MoveUp(i) => {
                     self.sections.swap(i - 1, i);
                     if self.selected_section == Some(i) { self.selected_section = Some(i - 1); }
+                    self.unsaved_changes = true;
                 }
                 SectionOp::MoveDown(i) => {
                     self.sections.swap(i, i + 1);
                     if self.selected_section == Some(i) { self.selected_section = Some(i + 1); }
+                    self.unsaved_changes = true;
                 }
                 SectionOp::Remove(i) => {
                     self.sections.remove(i);
                     if self.selected_section == Some(i) { self.selected_section = None; }
+                    self.unsaved_changes = true;
                 }
             }
         }
@@ -449,11 +499,15 @@ impl SongMapApp {
 
                 ui.horizontal(|ui| {
                     ui.label("Nom :");
-                    ui.text_edit_singleline(&mut self.sections[idx].name);
+                    if ui.text_edit_singleline(&mut self.sections[idx].name).changed() {
+                        self.unsaved_changes = true;
+                    }
                 });
                 ui.horizontal(|ui| {
                     ui.label("Mesures :");
-                    ui.add(egui::DragValue::new(&mut self.sections[idx].bars).range(1..=256));
+                    if ui.add(egui::DragValue::new(&mut self.sections[idx].bars).range(1..=256)).changed() {
+                        self.unsaved_changes = true;
+                    }
                 });
                 ui.horizontal(|ui| {
                     ui.label("Type :");
@@ -463,6 +517,7 @@ impl SongMapApp {
                             for k in SectionKind::all() {
                                 if ui.selectable_label(self.sections[idx].kind == *k, k.label()).clicked() {
                                     self.sections[idx].kind = k.clone();
+                                    self.unsaved_changes = true;
                                 }
                             }
                         });
@@ -490,16 +545,19 @@ impl SongMapApp {
         });
         if ui.button("  +  Ajouter  ").clicked() {
             self.sections.push(Section::new(self.add_kind.clone(), self.add_bars));
+            self.unsaved_changes = true;
         }
 
         ui.add_space(4.0);
         if ui.button("Reinitialiser").on_hover_text("Revenir au pattern par defaut").clicked() {
+            self.maybe_auto_save();
             self.sections = if self.left_tab == LeftTab::Artists {
                 ARTISTS[self.selected_artist].default_sections()
             } else {
                 GENRES[self.selected_genre].default_sections()
             };
             self.selected_section = None;
+            self.unsaved_changes = false;
         }
 
         ui.separator();
@@ -507,12 +565,36 @@ impl SongMapApp {
 
         ui.horizontal(|ui| {
             ui.label("Nom :");
-            ui.text_edit_singleline(&mut self.project_name);
+            if ui.text_edit_singleline(&mut self.project_name).changed() {
+                self.unsaved_changes = true;
+            }
         });
         ui.horizontal(|ui| {
             if ui.button("Sauvegarder").clicked() { self.save_project(); }
             if ui.button("Importer").clicked()    { self.load_project(); }
         });
+
+        ui.add_space(2.0);
+        if ui.checkbox(&mut self.auto_save, "Auto-sauvegarde").changed() {
+            if self.auto_save && self.auto_save_path.is_none() {
+                if let Some(path) = rfd::FileDialog::new()
+                    .set_file_name(format!("{}.songmap.json", self.project_name))
+                    .add_filter("SongMap JSON", &["json"])
+                    .save_file()
+                {
+                    self.auto_save_path = Some(path);
+                } else {
+                    self.auto_save = false; // dialog annulé
+                }
+            }
+        }
+        if let Some(path) = self.auto_save.then(|| self.auto_save_path.as_ref()).flatten() {
+            ui.label(
+                RichText::new(format!("→ {}", path.file_name().unwrap_or_default().to_string_lossy()))
+                    .small()
+                    .color(Color32::from_gray(120)),
+            );
+        }
 
         if !self.status_msg.is_empty() {
             ui.add_space(4.0);
@@ -535,13 +617,16 @@ impl SongMapApp {
             format!("{}  |  {} BPM", GENRES[self.selected_genre].name, self.bpm as u32)
         };
 
+        let total_bars = self.total_bars();
+        let total_secs = self.total_secs();
+
         ui.horizontal(|ui| {
             ui.heading(&label);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(RichText::new(format!(
                     "{} mesures  |  {}",
-                    self.total_bars(),
-                    Self::fmt_time(self.total_secs())
+                    total_bars,
+                    Self::fmt_time(total_secs)
                 )).color(Color32::from_gray(160)));
             });
         });
@@ -549,7 +634,7 @@ impl SongMapApp {
         ui.separator();
 
         // ── Interactive timeline ──────────────────────────────────────────────
-        self.draw_timeline(ui);
+        self.draw_timeline(ui, total_bars);
 
         ui.add_space(8.0);
 
@@ -608,7 +693,9 @@ impl SongMapApp {
                             .frame(false)
                             .text_color(Color32::from_gray(200))
                             .font(egui::FontId::proportional(12.0));
-                        ui.add(te);
+                        if ui.add(te).changed() {
+                            self.unsaved_changes = true;
+                        }
                     });
             }
         });
@@ -616,12 +703,12 @@ impl SongMapApp {
 
     // ── Timeline drawing + interaction ────────────────────────────────────────
 
-    fn draw_timeline(&mut self, ui: &mut egui::Ui) {
+    fn draw_timeline(&mut self, ui: &mut egui::Ui, total_bars: u32) {
         const TL_HEIGHT: f32 = 76.0;
         const RESIZE_ZONE: f32 = 10.0;
 
         let available_width = ui.available_width();
-        let total_bars      = self.total_bars().max(1) as f32;
+        let total_bars      = total_bars.max(1) as f32;
 
         // Allocate the full timeline rect with drag sense
         let (resp, painter) = ui.allocate_painter(
@@ -716,6 +803,7 @@ impl SongMapApp {
 
         // ── Drag end ──────────────────────────────────────────────────────────
         if resp.drag_stopped() {
+            self.unsaved_changes = true;
             self.timeline_drag = None;
         }
 
