@@ -1,5 +1,7 @@
 # SongMap
 
+![SongMap](assets/screenshots/songmap_hero.png)
+
 **A desktop tool for structuring and visualizing song compositions.**
 
 SongMap helps musicians and producers map out their tracks section by section — from intro to outro — with real-time BPM-based timing, an interactive timeline, and genre-aware templates. Whether you're writing a pop song or a techno set, SongMap gives you a clear visual blueprint before you touch a DAW.
