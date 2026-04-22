@@ -88,3 +88,5 @@ assets/
 ## License
 
 MIT — do whatever you want, credit appreciated.
+
+---- Aseed_0x - For a better world ----
